@@ -1,0 +1,35 @@
+#!/bin/bash
+
+if [ ! -d ".git" ]; then
+  echo "Error: Not a git repository. Please run this script inside a git repository."
+  exit 1
+fi
+
+echo "Fetching and pruning remote branches..."
+git fetch --prune
+
+current_branch=$(git branch --show-current)
+echo "Current branch: $current_branch"
+
+git checkout main
+merged_branches=$(git branch --merged | grep -v "\*")
+
+git checkout "$current_branch"
+
+if [ -z "$merged_branches" ]; then
+  echo "No merged branches to delete."
+  exit 0
+fi
+
+echo "The following branches are merged into 'main' and will be deleted:"
+echo "$merged_branches"
+
+read -p "Are you sure you want to delete these branches? (y/n): " confirmation
+
+if [[ "$confirmation" =~ ^[Yy]$ ]]; then
+  # Delete local branches that are merged into main
+  echo "$merged_branches" | xargs -n 1 git branch -d
+  echo "Merged branches deleted."
+else
+  echo "No branches were deleted."
+fi
